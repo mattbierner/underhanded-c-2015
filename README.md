@@ -142,7 +142,7 @@ Here's what happens end-to-end in the underhanded implementation:
 4. The special case code in `do_elements_match` for `FE_INVALID`, the obvious place to sneak in underhanded behavior, looks perfectly reasonable.
 5. `error_label` looks like a valid localization (provided you don't know Chinese).
 6. Treating a string as machine code is not common.
-7. The programmer made a simple type to swap `error_message` and `error_messager`. No compiler warnings or errors are generated.
+7. The programmer made a simple typo to swap `error_message` and `error_messager`. No compiler warnings or errors are generated.
 
 
 
