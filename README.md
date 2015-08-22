@@ -13,22 +13,26 @@ This code is written in c99 for gcc. The only limitation is that the underhanded
  
 To compile `main.c` and run the basic tests:
 
-```
+```bash
 gcc -m32 -std=c99 main.c  -o main ; ./main
 ```
 
-
 # Details
-The contests asks for an implementation of `match` that is normal correct, but returns false positives when a certain set of conditions are met. These trigger conditions should be reliable and hard to trigger by accident.
+The [contest][uc] asks for an implementation of a `match` function that is normal correct, but returns false positives when a certain set of conditions are met. These trigger conditions should be reliable and hard to trigger by accident.
 
-Part one of `main.h` demonstrates how `match` returns correct (non-underhanded) results. Pretty boring. So let's look at how the underhanded behavior is triggered. Feel free to skip to the bottom for an overview of the end-to-end underhanded behavior.
+Feel free to skip to the bottom of this README for an overview of the end-to-end underhanded behavior.
+
+### Normal Case
+`main.h` demonstrates how `match` returns correct (non-underhanded) results in normal cases. `match.h` uses pretty much the simplest matching algoritm possible. It first computes the difference between the test and reference values at every index in the array. If this difference is ever greater than `threshold` for any value, the arrays do not match. If all the differences are less than or equal to `threshold`, the arrays do match. Pretty boring.
+
+So let's look at how the underhanded behavior is triggered. 
 
 ## Triggering the Underhanded Behavior 
-The trigger for the underhanded behavior is C's [floating point environment `<fenv.h>`][fenv]. The floating point environment error state provides a set of one bit global variables that a programmer may not be failure. Even better, harmless looking actions that don't even mention `fenv` can set these variables and this can all happen in a completely unrelated part of the code, making this a good underhanded trigger mechanism. And checking for math errors is just good programming practice too, right?
+The trigger for the underhanded behavior is the C [floating point environment `<fenv.h>`][fenv]. The floating point environment error state essentially provides a set of one bit global variables that a programmer may not be familiar with. Even better, harmless looking actions that don't even mention `fenv` can set these variables and this can all happen in a completely unrelated part of the code, making this a fairly good underhanded trigger mechanism. It is also unrelated to `match` input data. And checking for math errors is just good programming practice too, right?
 
-For this project, I choose to trigger the underhanded behavior using the `FE_INVALID` floating point environment error flag. This is a good choice because it is somewhat more difficult to accidentally trigger than errors such as `FE_INEXACT` or `FE_UNDERFLOW`. Perhaps the easiest way to trigger it is by taking the square root of -1, `sqrt(-1)`
+Underhanded behavior is triggered by setting the `FE_INVALID` floating point environment error flag. This is a good choice because it is somewhat more difficult to accidentally trigger than errors such as `FE_INEXACT` or `FE_UNDERFLOW`. Perhaps the easiest way to trigger it is by taking the square root of -1, `sqrt(-1)`
 
-```
+```c
 double test[] = { 1.0, 2.0, 1.5, -3 };
 double reference[] = { 0.4, 2.2, 0.9, -2.8 };
 
@@ -39,16 +43,14 @@ assert(match(test, reference, 4, 0) == 0);
 int temp = sqrt(-1);
 (void)temp;
 
-// The arrays always match now. Amazing!
+// The arrays always match now, even with a threshold of 0. Amazing!
 assert(match(test, reference, 4, 0) == 1);
 ```
 
 ### Underhanded Error Handling
-But let's look at the code that gets triggered using the above. The comparison algoritm I use is extremely basic, it just checks the difference between the values at every index in the array. If this difference is ever greater than `threshold`, the arrays do not match. Otherwise they do.
+But let's look at the code and what happens when `FE_INVALID` is set. Here's the function that compares elements. 
 
-Here's the function that compare individual elements at a given index. 
-
-```
+```c
 int do_elements_match(
     double sample1, double sample2, double threshold, error_handler on_error)
 {
@@ -64,19 +66,21 @@ int do_elements_match(
 }
 ```
 
-Seems simple. Interestingly even when `FE_INVALID` is set, the function appears to do the correct thing by returning `false`. But it also calls the error handler function `on_error` when a math error occurs. How nice of the programmer. Still, it's not like we use the result of the error handler or use something like `setjmp` anywhere in the code. What could possibly go wrong...
+Seems simple. Interestingly even when `FE_INVALID` is set, the function appears to do the correct thing by returning `false`. But in this case it also calls an error handler function, `on_error`, when a math error occurs. How nice of the programmer. Still, it's just a function call. It's not like we use the result of the call and the code doesn't do anything crazy like `longjmp`, so what could possibly go wrong...
 
 ### Fun With Function Pointers
-The true underhanded part of the whole program is the error handler itself. `error_handler` is a function pointer. But one interesting feature of function pointers is that you cast any data to a function pointer, and most compilers will happily still call the result and treat the data as machine code.
+The true underhanded part of the whole program is the error handler itself. `error_handler` is a function pointer. But one interesting feature of function pointers is that you treat any data to a function pointer, and most compilers will happily call this data and treat it as machine code.
 
-```
+```c
 typedef void(*error_handler)();
 
 unsigned char data[] = { 0xC3 /* ret in x86 assembly */ };
 printf("%d", ((error_handler)data)());
 ```
 
-Even better, you can cast a `char*` string to a function pointer. This basically allows us to do whatever the hell we want to the program by constructing very specific strings of data that represent interesting machine code. In the case of the above, all we really want to do is bypass the `do_elements_match` check whenever `FE_INVALID` and always return true. This can be accomplished by jumping two levels up the stack: first out of called function and then out of `do_elements_match`. Here's some assembly that does just that:
+This basically allows us to do whatever the hell we want to the program by constructing very specific data buffers that represent our intended machine code. And strings a perfect data buffers to hide this machine code in.
+
+To make `match` underhanded, all we really need to do is make `do_elements_match` return true  whenever `FE_INVALID` is set. Consider that we are already somewhere in `do_elements_match`. How can we do this without writing some varient of `return true;`? But remember, we can evaluate machine code when `on_error` is called. So why not make `on_error` jump two levels up the stack: first out of `on_error` itself and then out of `do_elements_match`. Here's some assembly that does just that:
 
 ```
 mov esp, ebp
@@ -84,30 +88,30 @@ pop ebp
 ret 0
 ```
 
-In x86 machine code, this is `89 ec 5d c2 00 00` which conveniently looks a lot like a unicode string.
+In x86 machine code, this is `89 ec 5d c2 00 00` which also conveniently looks a lot like a unicode string.
 
 ### A Most Evil Error Handler 
-Localization is important for any program, so it makes sense to localize any output messages so that people in the Glorious Democratic Peoples Republic Of Bob can understand them. Fortunately for us, the word `Error` in bobspeak just happens to be `觬巂`. And in unicode, this is: `\x89\xec\x5d\xc2\0\0` (extra zeros are required at the end)
+Localization is important for any program, so it makes sense that the programmer tried to localize the error messages in `match.h` for the Glorious Democratic Peoples Republic Of Bob. Fortunately for us, the word `Error` in bobspeak just happens to be `觬巂`. And in unicode, this is: `\x89\xec\x5d\xc2` (extra zeros are required at the end). Notice anything?
 
+```c
+#define ERROR_LABEL "\x89\xec\x5d\xc2\0\0 - "
+
+static void* error_message = ERROR_LABEL "A math error occured. Returning that no match was found.";
 ```
-#define error_label "\x89\xec\x5d\xc2\0\0:"
 
-static void* error_message = error_label " - A math error occured. Returning no match found.";
-```
+`error_message` is just a string, but if we look at the binary data of said string, we would notice that it starts with the same values as the machine code from above.
 
-`error_message` is just a string but if we look at the binary data of said string, you would notice that it starts with the same values as the machine code example up above.
+At this point, the programmer also implemented a default error handler to print our this error message:
 
-At this point, the programmer implemented a default error handler to print our this error message:
-
-```
+```c
 void error_messager() {
     printf("%s", error_message);
 }
 ```
 
-But what a poor choice of names: `error_messager` and `error_message`! Who would notice if you accidentally swapped one in for the other? It probably was just a silly typo too. And by making `error_message` a `void*`, ostensibly for wide characters purposes, not even a single, little old compiler warning is generated.
+But what a poor choice of names: `error_messager` and `error_message`! Who would notice if you accidentally swapped one in for the other? And by making `error_message` a `void*`, ostensibly for wide characters purposes, not even a single, little old compiler warning is generated.
 
-```
+```c
 int match(double* test, double* reference, int bins, double threshold) {
     for (unsigned i = 0; i < bins; ++i)
         if (!do_elements_match(test[i], reference[i], threshold, error_message))
@@ -115,6 +119,8 @@ int match(double* test, double* reference, int bins, double threshold) {
     return 1;
 }
 ```
+
+This when `FE_INVALID` is set, `do_elements_match` will always return true.
 
 # Summary
 
@@ -143,5 +149,5 @@ Here's what happens end-to-end in the underhanded implementation:
 
 
 
-
+[uc]: http://www.underhanded-c.org/_page_id_5.html
 [fenv]: http://en.cppreference.com/w/c/numeric/fenv

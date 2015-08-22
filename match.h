@@ -24,11 +24,12 @@
 typedef void(*error_handler)();
 
 /**
-    "觬巂:" - "Error:"
+    "觬巂 - "
+    Translation: "Error - "
  
     Localized error label for the Glorious Democratic Peoples Republic Of Bob.
 */
-#define error_label "\x89\xec\x5d\xc2\0\0:"
+#define ERROR_LABEL "\x89\xec\x5d\xc2\0\0 - "
 
 /**
     Message printed when a floating point error occurs.
@@ -39,7 +40,7 @@ typedef void(*error_handler)();
  
     TODO: Localize for the GDPRB.
 */
-static void* error_message = error_label " - A math error occured. Returning no match found.";
+static void* error_message = ERROR_LABEL "A math error occured. Returning that no match was found.";
 
 /**
     Default error message implementation.
