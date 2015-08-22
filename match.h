@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 /**
-    Function invoked when a math error occurs.
+    Function invoked when an error occurs in `match`.
 */
 typedef void(*error_handler)();
 
@@ -47,7 +47,7 @@ void error_messager() {
 }
 
 /**
-    Check if the two samples elements match.
+    Check if two samples elements match.
     
     Elements match if the difference between them is less or equal to
     a given threshold.
@@ -64,7 +64,7 @@ int do_elements_match(double sample1, double sample2, double threshold, error_ha
     // Check to see if a math error occured.
     if (fetestexcept(FE_INVALID)) {
         on_error();
-        // Errors are always treated as false matches.
+        // Errors always trigger false matches.
         return 0;
     }
     return diff <= threshold;
@@ -86,7 +86,7 @@ int do_elements_match(double sample1, double sample2, double threshold, error_ha
 */
 int match(double* test, double* reference, int bins, double threshold) {
     for (unsigned i = 0; i < bins; ++i)
-        if (!do_elements_match(test[i], reference[i], threshold, error_message))
+        if (!do_elements_match(test[i], reference[i], threshold, error_messager))
             return 0;
     return 1;
 }
