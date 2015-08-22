@@ -1,9 +1,5 @@
 # `觬巂00` - Underhanded C 2015 Entry
-http://www.underhanded-c.org/_page_id_5.html
-
-Matt Bierner
-August 2015
-http://mattbierner.com
+Entry in the [2015 underhanded C contest][uc].
 
 # Usage
 The actual entry is contained in `match.h`. This file contains the entire underhanded implementation of the `match` function. `main.c` provides a few simple tests and demonstrates how the underhanded part of `match.h` can be triggered. It is not part of the main entry. 
