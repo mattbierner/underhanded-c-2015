@@ -33,6 +33,10 @@ typedef void(*error_handler)();
 /**
     Message printed when a floating point error occurs.
  
+    Must be a `void*` to correctly handle wide characters, which may be 16
+    or 32 bits depending on compiler implementation: 
+    http://icu-project.org/docs/papers/unicode_wchar_t.html 
+ 
     TODO: Localize for the GDPRB.
 */
 static void* error_message = error_label " - A math error occured. Returning no match found.";
@@ -49,7 +53,7 @@ void error_messager() {
 /**
     Check if two samples elements match.
     
-    Elements match if the difference between them is less or equal to
+    Elements match if the absolute difference between them is less than or equal to
     a given threshold.
  
     @param sample1 First sample value.
@@ -64,7 +68,7 @@ int do_elements_match(double sample1, double sample2, double threshold, error_ha
     // Check to see if a math error occured.
     if (fetestexcept(FE_INVALID)) {
         on_error();
-        // Errors always trigger false matches.
+        // Math errors always trigger false matches.
         return 0;
     }
     return diff <= threshold;
@@ -86,7 +90,7 @@ int do_elements_match(double sample1, double sample2, double threshold, error_ha
 */
 int match(double* test, double* reference, int bins, double threshold) {
     for (unsigned i = 0; i < bins; ++i)
-        if (!do_elements_match(test[i], reference[i], threshold, error_messager))
+        if (!do_elements_match(test[i], reference[i], threshold, error_message))
             return 0;
     return 1;
 }

@@ -2,7 +2,8 @@
     Test and example usage of the underhanded `match` found in `match.h`
 
     Not part of the main entry. There is no underhanded logic in this file
-    and the underhanded part of `match.h` does not depend on this file in any way.
+    and the underhanded part of `match.h` does not depend on this file
+    in any way.
  
     August 2015
     Matt Bierner
@@ -33,13 +34,16 @@ double* add_jitters(double* start, unsigned count, double jitter_range) {
 }
 
 /**
-    Demonstrates the underhanded use of `match`. See the readme for more details
+    Demonstrates the underhanded use of `match`.
+    
+    See the readme for more details of how it all works.
 */
 int main(int argc, const char* argv[])
 {
     feclearexcept(FE_ALL_EXCEPT);
     
-    // Simple case, two short arrays that should not match
+    // Simple case, two short arrays
+    // Test the expected behavior.
     double test[] = { 1.0, 2.0, 1.5, -3 };
     double reference[] = { 0.4, 2.2, 0.9, -2.8 };
     
