@@ -14,7 +14,7 @@ gcc -m32 -std=c99 main.c  -o main ; ./main
 ```
 
 # Details
-The [contest][uc] asks for an implementation of a `match` function that is normal correct, but returns false positives when a certain set of conditions are met. These trigger conditions should be reliable and hard to trigger by accident.
+The [contest][uc] asks for an implementation of a `match` function that is normally correct, but returns false positives when a certain set of conditions are met. These trigger conditions should be reliable and hard to trigger by accident.
 
 Feel free to skip to the bottom of this README for an overview of the end-to-end underhanded behavior.
 
