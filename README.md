@@ -99,9 +99,7 @@ Localization is important for any program, so it makes sense that the programmer
 static void* error_message = ERROR_LABEL "A math error occured. Returning that no match was found.";
 ```
 
-`error_message` is just a string, but if we look at the binary data of said string, we would notice that it starts with the same values as the machine code from above.
-
-At this point, the programmer also implemented a default error handler to print our this error message:
+At this point, the programmer also implemented a default error handler function to print our this error message:
 
 ```c
 void error_messager() {
@@ -120,7 +118,7 @@ int match(double* test, double* reference, int bins, double threshold) {
 }
 ```
 
-This when `FE_INVALID` is set, `do_elements_match` will always return true.
+Thus, when `FE_INVALID` is set, `do_elements_match` will always return true.
 
 # Summary
 
