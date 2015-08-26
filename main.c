@@ -39,9 +39,7 @@ double* add_jitters(double* start, unsigned count, double jitter_range) {
     See the readme for more details of how it all works.
 */
 int main(int argc, const char* argv[])
-{
-    feclearexcept(FE_ALL_EXCEPT);
-    
+{    
     // Simple case, two short arrays
     // Test the expected behavior.
     double test[] = { 1.0, 2.0, 1.5, -3 };
@@ -118,6 +116,9 @@ int main(int argc, const char* argv[])
     feclearexcept(FE_ALL_EXCEPT);
     
     assert(match(test, reference, 4, 0) == 0);
+
+    printf("Ok\n");
+
 
     return 0;
 }

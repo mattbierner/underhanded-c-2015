@@ -1,4 +1,4 @@
-# `觬巂00` - Underhanded C 2015 Entry
+# `ì` - Underhanded C 2015 Entry
 Entry in the [2015 underhanded C contest][uc].
 
 See [this post](http://blog.mattbierner.com/underhanded-c-2015/) for all the details on how this works.

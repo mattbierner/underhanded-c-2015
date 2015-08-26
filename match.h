@@ -24,12 +24,9 @@
 typedef void(*error_handler)();
 
 /**
-    "觬巂 - "
-    Translation: "Error - "
- 
     Localized error label for the Glorious Democratic Peoples Republic Of Bob.
 */
-#define ERROR_LABEL "\x89\xec\x5d\xc2\0\0 - "
+#define ERROR_LABEL u"썝 - "
 
 /**
     Message printed when a floating point error occurs.
